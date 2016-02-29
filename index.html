@@ -1,0 +1,47 @@
+<! DOCTYPE>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>marktool</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+    <div class="content-wrapper">
+        <div class="main-content">
+            <div class="buttons-wrapper">
+                <ul>
+                    <li>
+                        <a class="button-pin">Pin</a>
+                    </li>
+                    <li>
+                        <a class="button-rectangle">Rectangle</a>
+                    </li>
+                    <li>
+                        <a class="button-ellipse">Ellipse</a>
+                    </li>
+                    <li>
+                        <a class="button-arrow">Arrow</a>
+                    </li>
+                </ul>
+            </div>
+            <div class="canvas-wrapper">
+                <canvas class="canvas-content" width="500" height="400"></canvas>
+                <div class="popup">
+                    <textarea id="info-input"></textarea>
+                    <div class="buttons">
+                        <button id="confirm">确定</button>
+                        <button id="cancel">取消</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="console-wrapper">
+            <textarea id="info-output"></textarea>
+        </div>
+    </div>
+    <script type="text/javascript" src="draw.js"></script>
+</body>
+
+</html>

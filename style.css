@@ -1,0 +1,104 @@
+body {
+    margin: 0;
+}
+
+.content-wrapper {
+    width: 800px;
+    height: 600px;
+    border: 1px solid black;
+    margin: 0 auto;
+}
+
+.main-content {
+    height: 80%;
+    border-bottom: 1px solid black;
+}
+
+.console-wrapper {
+    height: 20%;
+}
+
+.buttons-wrapper {
+    height: 100%;
+    width: 20%;
+    position: relative;
+    float: left;
+}
+
+.buttons-wrapper ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate3d(-50%, -50%, 0);
+}
+
+.buttons-wrapper li {
+    margin: 10px 0;
+}
+
+.buttons-wrapper a {
+    display: inline-block;
+    width: 100px;
+    padding: 10px;
+    cursor: pointer;
+    background-color: #CCCCCC;
+    text-align: center;
+}
+
+.buttons-wrapper a:active {
+    background-color: gray;
+}
+
+.button-click-color {
+    background: gray;
+}
+
+.canvas-wrapper {
+    width: 80%;
+    height: 100%;
+    float: left;
+    position: relative;
+}
+
+.canvas-content {
+    border: 1px solid black;
+    position: absolute;
+    margin: auto;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    cursor: crosshair;
+}
+
+.popup {
+    position: absolute;
+    width: 300px;
+    height: 200px;
+    text-align: center;
+    border: 1px solid black;
+    background-color: white;
+    display: none;
+}
+
+#info-input {
+    width: 200px;
+    height: 100px;
+    margin-top: 25px;
+}
+
+.buttons {
+    margin-top: 20px;
+}
+
+#confirm {
+    margin-right: 10px;
+}
+
+#info-output {
+    width: 100%;
+    height: 100%;
+}
