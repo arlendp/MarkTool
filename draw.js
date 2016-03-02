@@ -1,9 +1,12 @@
 var rectangle = document.getElementsByClassName("button-rectangle")[0];
+var ellipse = document.getElementsByClassName("button-ellipse")[0];
 var canvasContent = document.getElementsByClassName("canvas-content")[0];
 var shapesInfo = []; //存储canvas中的所有图形信息
 var ctx = getCanvas();
 var shapeStore = [];
 var startCoordinate = {};
+var currentShape;
+var drawingShape;
 //鼠标行为属性
 var mouseAction = {
     canStart: false,
@@ -23,7 +26,14 @@ function getCanvas() {
 
 rectangle.onclick = function() {
     mouseAction.canStart = true;
+    drawingShape = "rectangle";
 };
+
+ellipse.onclick = function() {
+    mouseAction.canStart = true;
+    drawingShape = "ellipse";
+}
+
 
 canvasContent.onmousedown = function(event) {
     //鼠标按下时的坐标
@@ -31,8 +41,23 @@ canvasContent.onmousedown = function(event) {
     if (mouseAction.canStart) {
         mouseAction.canDraw = true;
     }
-    if (mouseAction.canResize && (getMouseType() != "default")) {
+    if (mouseAction.canResize && (getMouseAction() != "default")) {
         mouseAction.canAdjust = true;
+        currentShape = getActiveShape();
+    }
+    if (getMouseAction() == "default") {
+        mouseAction.canResize = false;
+        mouseAction.canAdjust = false;
+        mouseAction.canStart = true;
+        changeMouseType("crosshair");
+        mouseAction.canChangeMouseType = false;
+        var shape = shapesInfo[shapesInfo.length - 1];
+        ctx.clearRect(shape.left - 7, shape.top - 7, shape.width + 14, shape.height + 14);
+        if (drawingShape == "rectangle") {
+            ctx.strokeRect(shape.left, shape.top, shape.width, shape.height);
+        } else if (drawingShape == "ellipse") {
+            drawEllipse(shape);
+        }
     }
 };
 
@@ -54,10 +79,9 @@ function mouseMoveAction(event) {
     if (mouseAction.canStart && mouseAction.canDraw) {
         var rect = calculateShapeInfo(startCoordinate, currentCoordinate);
         shapeStore.push(rect);
-        redraw(shapeStore);
+        redraw(shapeStore, drawingShape);
     };
     if (mouseAction.canAdjust) {
-        var currentShape = getActiveShape();
         if (shapeStore.length == 0) {
             ctx.clearRect(currentShape.left - 7, currentShape.top - 7, currentShape.width + 14, currentShape.height + 14);
         }
@@ -65,19 +89,110 @@ function mouseMoveAction(event) {
         moveDistance.x = currentCoordinate.x - startCoordinate.x;
         moveDistance.y = currentCoordinate.y - startCoordinate.y;
         var nextShape = {};
-        nextShape.left = currentShape.left + moveDistance.x;
-        nextShape.top = currentShape.top + moveDistance.y;
-        nextShape.width = currentShape.width;
-        nextShape.height = currentShape.height;
-        shapeStore.push(nextShape);
-        redraw(shapeStore);
+        var minDistance = 8;
+        if (getMouseAction() == "move") {
+            nextShape.left = currentShape.left + moveDistance.x;
+            nextShape.top = currentShape.top + moveDistance.y;
+            nextShape.width = currentShape.width;
+            nextShape.height = currentShape.height;
+        } else if (getMouseAction() == "n-resize") {
+            if (currentShape.height - moveDistance.y <= minDistance) {
+                changeMouseType("n-resize");
+                mouseAction.canChangeMouseType = false;
+            } else {
+                mouseAction.canChangeMouseType = true;
+            }
+            nextShape.left = currentShape.left;
+            nextShape.top = Math.min(currentShape.top + moveDistance.y, currentShape.top + currentShape.height - minDistance);
+            nextShape.width = currentShape.width;
+            nextShape.height = Math.max(currentShape.height - moveDistance.y, minDistance);
+        } else if (getMouseAction() == "s-resize") {
+            if (currentShape.height + moveDistance.y <= minDistance) {
+                changeMouseType("s-resize");
+                mouseAction.canChangeMouseType = false;
+            } else {
+                mouseAction.canChangeMouseType = true;
+            }
+            nextShape.left = currentShape.left;
+            nextShape.top = currentShape.top;
+            nextShape.width = currentShape.width;
+            nextShape.height = Math.max(currentShape.height + moveDistance.y, minDistance);
+        } else if (getMouseAction() == "w-resize") {
+            if (currentShape.width - moveDistance.x <= minDistance) {
+                changeMouseType("w-resize");
+                mouseAction.canChangeMouseType = false;
+            } else {
+                mouseAction.canChangeMouseType = true;
+            }
+            nextShape.left = Math.min(currentShape.left + moveDistance.x, currentShape.left + currentShape.width - minDistance);
+            nextShape.top = currentShape.top;
+            nextShape.width = Math.max(currentShape.width - moveDistance.x, minDistance);
+            nextShape.height = currentShape.height;
+        } else if (getMouseAction() == "e-resize") {
+            if (currentShape.width + moveDistance.x <= minDistance) {
+                changeMouseType("e-resize");
+                mouseAction.canChangeMouseType = false;
+            } else {
+                mouseAction.canChangeMouseType = true;
+            }
+            nextShape.left = currentShape.left;
+            nextShape.top = currentShape.top;
+            nextShape.width = Math.max(currentShape.width + moveDistance.x, minDistance);
+            nextShape.height = currentShape.height;
+        } else if (getMouseAction() == "ne-resize") {
+            if ((currentShape.width + moveDistance.x <= minDistance) || (currentShape.height - moveDistance.y <= minDistance)) {
+                changeMouseType("ne-resize");
+                mouseAction.canChangeMouseType = false;
+            } else {
+                mouseAction.canChangeMouseType = true;
+            }
+            nextShape.left = currentShape.left;
+            nextShape.top = Math.min(currentShape.top + moveDistance.y, currentShape.top + currentShape.height - minDistance);
+            nextShape.width = Math.max(currentShape.width + moveDistance.x, minDistance);
+            nextShape.height = Math.max(currentShape.height - moveDistance.y, minDistance);
+        } else if (getMouseAction() == "se-resize") {
+            if ((currentShape.width + moveDistance.x <= minDistance) || (currentShape.height + moveDistance.y <= minDistance)) {
+                changeMouseType("se-resize");
+                mouseAction.canChangeMouseType = false;
+            } else {
+                mouseAction.canChangeMouseType = true;
+            }
+            nextShape.left = currentShape.left;
+            nextShape.top = currentShape.top;
+            nextShape.width = Math.max(currentShape.width + moveDistance.x, minDistance);
+            nextShape.height = Math.max(currentShape.height + moveDistance.y, minDistance);
+        } else if (getMouseAction() == "nw-resize") {
+            if ((currentShape.width - moveDistance.x <= minDistance) || (currentShape.height - moveDistance.y <= minDistance)) {
+                changeMouseType("nw-resize");
+                mouseAction.canChangeMouseType = false;
+            } else {
+                mouseAction.canChangeMouseType = true;
+            }
+            nextShape.left = Math.min(currentShape.left + moveDistance.x, currentShape.left + currentShape.width - minDistance);
+            nextShape.top = Math.min(currentShape.top + moveDistance.y, currentShape.top + currentShape.height - minDistance);
+            nextShape.width = Math.max(currentShape.width - moveDistance.x, minDistance);
+            nextShape.height = Math.max(currentShape.height - moveDistance.y, minDistance);
+        } else if (getMouseAction() == "sw-resize") {
+            if ((currentShape.width - moveDistance.x <= minDistance) || (currentShape.height + moveDistance.y <= minDistance)) {
+                changeMouseType("sw-resize");
+                mouseAction.canChangeMouseType = false;
+            } else {
+                mouseAction.canChangeMouseType = true;
+            }
+            nextShape.left = Math.min(currentShape.left + moveDistance.x, currentShape.left + currentShape.width - minDistance);
+            nextShape.top = currentShape.top;
+            nextShape.width = Math.max(currentShape.width - moveDistance.x, minDistance);
+            nextShape.height = Math.max(currentShape.height + moveDistance.y, minDistance);
+        }
 
-        //TODO: 解决移动图形时产生的问题
-        // shapesInfo[shapesInfo.length - 1].left = shapeStore[0].left;
-        // shapesInfo[shapesInfo.length - 1].top = shapeStore[0].top;
-        // shapesInfo[shapesInfo.length - 1].width = shapeStore[0].width;
-        // shapesInfo[shapesInfo.length - 1].height = shapeStore[0].height;
-        console.log(shapeStore[0]);
+        shapeStore.push(nextShape);
+        redraw(shapeStore, drawingShape);
+
+        //鼠标移动时即改变坐标信息，否则鼠标定位时会出错
+        shapesInfo[shapesInfo.length - 1].left = shapeStore[0].left;
+        shapesInfo[shapesInfo.length - 1].top = shapeStore[0].top;
+        shapesInfo[shapesInfo.length - 1].width = shapeStore[0].width;
+        shapesInfo[shapesInfo.length - 1].height = shapeStore[0].height;
     }
     if (mouseAction.canChangeMouseType) {
         locateMouse(shapesInfo[shapesInfo.length - 1], event);
@@ -87,9 +202,9 @@ function mouseMoveAction(event) {
 //获取当前活动的图形
 function getActiveShape() {
     if (shapesInfo[shapesInfo.length - 1].scalable == true) {
-        return shapesInfo[shapesInfo.length - 1];
+        return JSON.parse(JSON.stringify(shapesInfo[shapesInfo.length - 1]));
     } else {
-        return undefined;
+        return null;
     }
 }
 
@@ -103,13 +218,27 @@ canvasContent.onmouseup = function(event) {
 }
 
 //绘制图形
-function redraw(shapeStore) {
+function redraw(shapeStore, shape) {
     //当鼠标移动时，移除上一帧图形
     if (shapeStore[1]) {
         ctx.clearRect(shapeStore[0].left - 1, shapeStore[0].top - 1, shapeStore[0].width + 2, shapeStore[0].height + 2);
         shapeStore.reverse().pop();
     }
-    ctx.strokeRect(shapeStore[0].left, shapeStore[0].top, shapeStore[0].width, shapeStore[0].height);
+    if (shape == "rectangle") {
+        ctx.strokeRect(shapeStore[0].left, shapeStore[0].top, shapeStore[0].width, shapeStore[0].height);
+    } else if (shape == "ellipse") {
+        drawEllipse(shapeStore[0]);
+    }
+}
+
+function drawEllipse(shapeInfo) {
+    var x = shapeInfo.left + shapeInfo.width / 2;
+    var y = shapeInfo.top + shapeInfo.height / 2;
+    var radiusX = shapeInfo.width / 2;
+    var radiusY = shapeInfo.height / 2;
+    ctx.beginPath();
+    ctx.ellipse(x, y, radiusX, radiusY, 0, 0, 2 * Math.PI);
+    ctx.stroke();
 }
 
 function calculateShapeInfo(start, end) {
