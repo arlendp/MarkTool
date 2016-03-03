@@ -1,5 +1,6 @@
 var rectangle = document.getElementsByClassName("button-rectangle")[0];
 var ellipse = document.getElementsByClassName("button-ellipse")[0];
+var arrow = document.getElementsByClassName("button-arrow")[0];
 var canvasContent = document.getElementsByClassName("canvas-content")[0];
 var shapesInfo = []; //存储canvas中的所有图形信息
 var ctx = getCanvas();
@@ -16,6 +17,7 @@ var mouseAction = {
     canAdjust: false
 };
 
+//获取canvas上下文
 function getCanvas() {
     var c = canvasContent.getContext("2d");
     c.lineWidth = 2;
@@ -34,6 +36,10 @@ ellipse.onclick = function() {
     drawingShape = "ellipse";
 }
 
+arrow.onclick = function() {
+    mouseAction.canStart = true;
+    drawingShape = "arrow";
+}
 
 canvasContent.onmousedown = function(event) {
     //鼠标按下时的坐标
@@ -57,6 +63,8 @@ canvasContent.onmousedown = function(event) {
             ctx.strokeRect(shape.left, shape.top, shape.width, shape.height);
         } else if (drawingShape == "ellipse") {
             drawEllipse(shape);
+        } else if (drawingShape == "arrow") {
+            drawArrow(shape);
         }
     }
 };
@@ -228,6 +236,8 @@ function redraw(shapeStore, shape) {
         ctx.strokeRect(shapeStore[0].left, shapeStore[0].top, shapeStore[0].width, shapeStore[0].height);
     } else if (shape == "ellipse") {
         drawEllipse(shapeStore[0]);
+    } else if (shape == "arrow") {
+        drawArrow(shapeStore[0]);
     }
 }
 
@@ -238,6 +248,42 @@ function drawEllipse(shapeInfo) {
     var radiusY = shapeInfo.height / 2;
     ctx.beginPath();
     ctx.ellipse(x, y, radiusX, radiusY, 0, 0, 2 * Math.PI);
+    ctx.stroke();
+}
+
+function Coordinate(x, y) {
+    this.x = x;
+    this.y = y;
+}
+
+function drawArrow(shapeInfo) {
+    var left = shapeInfo.left;
+    var top = shapeInfo.top;
+    var w = shapeInfo.width;
+    var h = shapeInfo.height;
+    var radian, interiorAngle1, interiorAngle2, exteriorAngle1, exteriorAngle2;
+    var ratio = 9 / 10;
+    if (w >= h) {
+        radian = Math.atan(h / w);
+        exteriorAngle1 = new Coordinate(left + w - h, h + top);
+        exteriorAngle2 = new Coordinate(left + w - h * Math.cos(2 * radian), top + h - h * Math.sin(2 * radian));
+        interiorAngle1 = new Coordinate(left + h / Math.tan(1.5 * radian) * ratio, top + h * ratio);
+        interiorAngle2 = new Coordinate(left + ratio * h / Math.sin(3 / 2 * radian) * Math.cos(radian / 2), top + ratio * h / Math.sin(3 / 2 * radian) * Math.sin(radian / 2));
+    } else {
+        radian = Math.atan(w / h);
+        exteriorAngle1 = new Coordinate(left + w, top + h - w);
+        exteriorAngle2 = new Coordinate(left + w - w * Math.sin(2 * radian), top + h - w * Math.sin(2 * radian));
+        interiorAngle1 = new Coordinate(left + ratio * w, top + ratio * w / Math.tan(3 * radian / 2));
+        interiorAngle2 = new Coordinate(left + ratio * w / Math.sin(3 / 2 * radian) * Math.sin(radian / 2), top + ratio * Math.sin(3 / 2 * radian) * Math.cos(radian / 2));
+    }
+    ctx.beginPath();
+    ctx.moveTo(left, top);
+    ctx.lineTo(interiorAngle1.x, interiorAngle1.y);
+    ctx.lineTo(exteriorAngle1.x, exteriorAngle1.y);
+    ctx.lineTo(left + w, top + h);
+    ctx.lineTo(exteriorAngle2.x, exteriorAngle2.y);
+    ctx.lineTo(interiorAngle2.x, interiorAngle2.y);
+    ctx.closePath();
     ctx.stroke();
 }
 
@@ -256,7 +302,7 @@ function finishDrawing(shapeStore) {
     if (mouseAction.canStart && mouseAction.canDraw) {
         mouseAction.canStart = false;
         mouseAction.canDraw = false;
-        data.shape = "rectangle";
+        data.shape = drawingShape;
         data.scalable = true;
         shapesInfo.push(data);
     }
